@@ -6,11 +6,14 @@ const app = express();
 app.use(express.json());
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
-const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN || 'abc123';
 const PORT = process.env.PORT || 3000;
 
 app.get('/webhook', (req, res) => {
-  if (req.query['hub.verify_token'] === VERIFY_TOKEN) {
+  const token = req.query['hub.verify_token'];
+  console.log('Received token:', token);
+  console.log('Expected token:', VERIFY_TOKEN);
+  if (token === VERIFY_TOKEN) {
     res.send(req.query['hub.challenge']);
   } else {
     res.sendStatus(403);
@@ -44,22 +47,4 @@ function saveFan(psid) {
 
 function loadFans() {
   try { return JSON.parse(fs.readFileSync('fans.json', 'utf8')); }
-  catch { return []; }
-}
-
-function sendMessage(psid, text) {
-  fetch(`https://graph.facebook.com/v2.6/me/messages?access_token=${PAGE_ACCESS_TOKEN}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ recipient: { id: psid }, message: { text } })
-  });
-}
-
-cron.schedule('30 7 * * *', () => {
-  let fans = loadFans();
-  fans.forEach((psid, i) => {
-    setTimeout(() => sendMessage(psid, "Good morning! 💕 Thinking of you today..."), i * 1000);
-  });
-});
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  catch { return
