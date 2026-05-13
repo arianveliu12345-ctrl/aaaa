@@ -42,6 +42,7 @@ function getDefaults() {
     subtitle: process.env.DEFAULT_SUBTITLE || "I'm on WhatsApp... lets talk",
     message: process.env.DEFAULT_MESSAGE || "Hey gorgeous! 💕 Thinking of you...",
     buttonText: process.env.DEFAULT_BUTTON_TEXT || "My Photos 📞",
+    currentPhoto: process.env.DEFAULT_CURRENT_PHOTO || "https://i.imgur.com/2J3Jne9.png",
     broadcastTime: process.env.DEFAULT_BROADCAST_TIME || "07:30",
     timezone: process.env.DEFAULT_TIMEZONE || "UTC",
     broadcastEnabled: true,
@@ -86,6 +87,9 @@ function saveFan(psid) {
 
 function getTodaysPhoto() {
   let s = loadSettings();
+  // If user has set a specific photo URL, use it (manual control)
+  if (s.currentPhoto) return s.currentPhoto;
+  // Otherwise rotate through photo library
   const day = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
   return s.photos[day % s.photos.length];
 }
@@ -172,11 +176,16 @@ app.get('/', (req, res) => {
     .map(([day, count]) => `<tr><td style="padding:6px 10px;">${day}</td><td style="padding:6px 10px;"><strong>${count}</strong> clicks</td></tr>`).join('');
 
   let photoRows = settings.photos.map((p, i) => `
-    <div style="display:inline-block;margin:5px;text-align:center;">
-      <img src="${p}" style="width:100px;height:80px;object-fit:cover;border-radius:8px;border:2px solid #ddd;"/>
-      <br/><small>Photo ${i+1}</small>
-      <br/><a href="/remove-photo?index=${i}" style="color:red;font-size:11px;" onclick="return confirm('Remove photo ${i+1}?')">Remove</a>
-    </div>`).join('');
+    <div style="display:flex;align-items:center;gap:10px;margin:8px 0;padding:8px;background:#f8f9fa;border-radius:8px;">
+      <img src="${p}" style="width:70px;height:55px;object-fit:cover;border-radius:6px;border:2px solid #ddd;flex-shrink:0;"/>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;color:#666;margin-bottom:3px;"><strong>Photo ${i+1}</strong></div>
+        <input type="text" readonly value="${p}" onclick="this.select()" style="width:100%;font-size:10px;padding:4px 6px;border:1px solid #ddd;border-radius:4px;background:white;" />
+      </div>
+      <button onclick="navigator.clipboard.writeText('${p}');this.textContent='✅ Copied!';setTimeout(()=>this.textContent='📋 Copy',1500);return false;" style="background:#007bff;color:white;border:none;padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">📋 Copy</button>
+      <a href="/remove-photo?index=${i}" onclick="return confirm('Remove photo ${i+1}?')" style="color:red;font-size:11px;text-decoration:none;white-space:nowrap;">🗑️</a>
+    </div>
+  `).join('');
 
   const storageBadge = DATA_DIR === '/data'
     ? '<span style="background:#d4edda;color:#155724;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:bold;">💾 Persistent storage ON</span>'
@@ -257,6 +266,9 @@ label { font-size: 12px; font-weight: bold; color: #555; display: block; margin-
       <label>Card subtitle:</label><input name="subtitle" value="${settings.subtitle}" />
       <label>Button text:</label><input name="buttonText" value="${settings.buttonText}" maxlength="20" />
       <div class="hint">Max 20 chars. Examples: "Call Me 📞", "💕 Chat Now"</div>
+      <label>📷 Photo URL (what fans see):</label>
+      <input name="currentPhoto" value="${settings.currentPhoto || settings.photos[0]}" placeholder="https://i.imgur.com/..." />
+      <div class="hint">Copy a URL from Photo Manager ↓ and paste it here</div>
       <label>WhatsApp / Redirect URL:</label><input name="whatsapp" value="${settings.whatsapp}" />
       <button type="submit" class="btn btn-blue">💾 Save Settings</button>
     </form>
@@ -349,6 +361,7 @@ app.post('/update-settings', (req, res) => {
   let s = loadSettings();
   s.message = req.body.message; s.title = req.body.title; s.subtitle = req.body.subtitle;
   s.buttonText = req.body.buttonText || getDefaults().buttonText; s.whatsapp = req.body.whatsapp;
+  s.currentPhoto = req.body.currentPhoto || s.photos[0];
   saveSettings(s); res.redirect('/?saved=1');
 });
 app.post('/update-schedule', (req, res) => {
