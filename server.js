@@ -62,6 +62,28 @@ function setupMessenger() {
   .catch(err => console.error('Setup error:', err));
 }
 
+// Manual broadcast trigger
+app.get('/send-now', async (req, res) => {
+  let fans = loadFans();
+  let today = getTodaysMessage();
+  console.log('📣 Manual broadcast triggered!');
+  console.log('Sending to', fans.length, 'fans');
+
+  fans.forEach((psid, i) => {
+    setTimeout(() => {
+      sendMessage(psid, today.text);
+      setTimeout(() => sendCard(psid, `Heyy darling 💕 ${MY_NAME}`, today.subtitle), 1500);
+    }, i * 2000);
+  });
+
+  res.send(`
+    <h2>📣 Broadcast started!</h2>
+    <p>Sending to ${fans.length} fans</p>
+    <p>Message: ${today.text}</p>
+    <p>This will take about ${Math.ceil(fans.length * 2 / 60)} minutes to complete</p>
+  `);
+});
+
 // Import all contacts from Facebook
 app.get('/import-contacts', async (req, res) => {
   try {
@@ -115,6 +137,8 @@ app.get('/', (req, res) => {
     <p>${today.subtitle}</p>
     <h3>Today's photo:</h3>
     <img src="${getTodaysPhoto()}" style="max-width:300px"/>
+    <br><br>
+    <a href="/send-now" style="background:green;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">📣 Send Broadcast Now</a>
   `);
 });
 
