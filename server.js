@@ -7,6 +7,7 @@ app.use(express.json());
 
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN || 'abc123';
+const PAGE_ID = process.env.PAGE_ID || '1057807767407930';
 const PORT = process.env.PORT || 3000;
 
 // ============================================
@@ -61,6 +62,48 @@ function setupMessenger() {
   .catch(err => console.error('Setup error:', err));
 }
 
+// Import all contacts from Facebook
+app.get('/import-contacts', async (req, res) => {
+  try {
+    let allPsids = [];
+    let url = `https://graph.facebook.com/v2.6/me/conversations?fields=participants&access_token=${PAGE_ACCESS_TOKEN}`;
+
+    while (url) {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.data) {
+        data.data.forEach(conv => {
+          if (conv.participants && conv.participants.data) {
+            conv.participants.data.forEach(p => {
+              if (p.id !== PAGE_ID) {
+                if (!allPsids.includes(p.id)) {
+                  allPsids.push(p.id);
+                }
+              }
+            });
+          }
+        });
+      }
+
+      url = data.paging && data.paging.next ? data.paging.next : null;
+    }
+
+    let existing = loadFans();
+    let combined = [...new Set([...existing, ...allPsids])];
+    fs.writeFileSync('fans.json', JSON.stringify(combined));
+
+    res.send(`
+      <h2>✅ Import complete!</h2>
+      <p>Found: ${allPsids.length} contacts</p>
+      <p>Total saved: ${combined.length} fans</p>
+    `);
+  } catch (err) {
+    res.send(`Error: ${err.message}`);
+  }
+});
+
+// Check fans in browser
 app.get('/', (req, res) => {
   let fans = loadFans();
   let today = getTodaysMessage();
@@ -75,6 +118,7 @@ app.get('/', (req, res) => {
   `);
 });
 
+// Webhook verification
 app.get('/webhook', (req, res) => {
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
@@ -85,6 +129,7 @@ app.get('/webhook', (req, res) => {
   }
 });
 
+// Receive messages
 app.post('/webhook', (req, res) => {
   let body = req.body;
   if (body.object === 'page') {
@@ -174,6 +219,7 @@ function isFanSaved(psid) {
   return fans.includes(psid);
 }
 
+// Daily broadcast at 7:30 AM
 cron.schedule('30 7 * * *', () => {
   console.log('🔔 Running daily broadcast...');
   let fans = loadFans();
