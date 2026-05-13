@@ -11,7 +11,6 @@ const PAGE_ID = process.env.PAGE_ID || '1057807767407930';
 const PORT = process.env.PORT || 3000;
 
 // ============================================
-const MY_NAME = "Altin";
 const MY_WHATSAPP = "https://photos.theviralbox.info/archives/1441";
 const MY_PHOTOS = [
   "https://i.imgur.com/2J3Jne9.png",
@@ -22,16 +21,16 @@ const MY_PHOTOS = [
 // ============================================
 
 const DAILY_MESSAGES = [
-  { text: `Hey gorgeous! 💕 Thinking of you... ${MY_NAME}`, subtitle: `I'm on WhatsApp... lets talk ${MY_NAME}` },
-  { text: `Good morning beautiful! 🌸 Miss you... ${MY_NAME}`, subtitle: `Come chat with me ${MY_NAME} 💬` },
-  { text: `Hey darling! 💋 How are you today? ${MY_NAME}`, subtitle: `Message me on WhatsApp... I'm waiting 😊 ${MY_NAME}` },
-  { text: `Hi sweetheart! ❤️ Just thinking of you... ${MY_NAME}`, subtitle: `Let's talk on WhatsApp today 👇 ${MY_NAME}` },
-  { text: `Good morning! ☀️ You crossed my mind... ${MY_NAME}`, subtitle: `Come find me on WhatsApp 💕 ${MY_NAME}` },
-  { text: `Hey you! 💕 Don't be a stranger... ${MY_NAME}`, subtitle: `I'm on WhatsApp... come say hi 👋 ${MY_NAME}` },
-  { text: `Morning gorgeous! 🌺 Hope you're having a great day... ${MY_NAME}`, subtitle: `Let's chat on WhatsApp 💬 ${MY_NAME}` },
-  { text: `Hey baby! 💕 Just woke up thinking of you... ${MY_NAME}`, subtitle: `Talk to me on WhatsApp 😘 ${MY_NAME}` },
-  { text: `Good morning! 💋 You make me smile... ${MY_NAME}`, subtitle: `Come chat on WhatsApp today 💕 ${MY_NAME}` },
-  { text: `Hey handsome! ❤️ Another beautiful day... ${MY_NAME}`, subtitle: `Message me on WhatsApp 👇 ${MY_NAME}` },
+  { text: `Hey gorgeous! 💕 Thinking of you...`, subtitle: `I'm on WhatsApp... lets talk` },
+  { text: `Good morning beautiful! 🌸 Miss you...`, subtitle: `Come chat with me 💬` },
+  { text: `Hey darling! 💋 How are you today?`, subtitle: `Message me on WhatsApp... I'm waiting 😊` },
+  { text: `Hi sweetheart! ❤️ Just thinking of you...`, subtitle: `Let's talk on WhatsApp today 👇` },
+  { text: `Good morning! ☀️ You crossed my mind...`, subtitle: `Come find me on WhatsApp 💕` },
+  { text: `Hey you! 💕 Don't be a stranger...`, subtitle: `I'm on WhatsApp... come say hi 👋` },
+  { text: `Morning gorgeous! 🌺 Hope you're having a great day...`, subtitle: `Let's chat on WhatsApp 💬` },
+  { text: `Hey baby! 💕 Just woke up thinking of you...`, subtitle: `Talk to me on WhatsApp 😘` },
+  { text: `Good morning! 💋 You make me smile...`, subtitle: `Come chat on WhatsApp today 💕` },
+  { text: `Hey handsome! ❤️ Another beautiful day...`, subtitle: `Message me on WhatsApp 👇` },
 ];
 
 function getTodaysMessage() {
@@ -54,7 +53,7 @@ function setupMessenger() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       "get_started": { "payload": "GET_STARTED" },
-      "greeting": [{ "locale": "default", "text": `Hey gorgeous! 💕 Tap Get Started to chat with ${MY_NAME}!` }]
+      "greeting": [{ "locale": "default", "text": `Hey gorgeous! 💕 Tap Get Started to chat with us!` }]
     })
   })
   .then(r => r.json())
@@ -72,7 +71,7 @@ app.get('/send-now', async (req, res) => {
   fans.forEach((psid, i) => {
     setTimeout(() => {
       sendMessage(psid, today.text);
-      setTimeout(() => sendCard(psid, `Heyy darling 💕 ${MY_NAME}`, today.subtitle), 1500);
+      setTimeout(() => sendCard(psid, `Heyy darling 💕`, today.subtitle), 1500);
     }, i * 2000);
   });
 
@@ -165,12 +164,12 @@ app.post('/webhook', (req, res) => {
       saveFan(psid);
 
       if (event.postback && event.postback.payload === 'GET_STARTED') {
-        sendMessage(psid, `Hey gorgeous! 💕 So happy you're here! ${MY_NAME}`);
-        setTimeout(() => sendCard(psid, `Heyy darling 💕 ${MY_NAME}`, `I'm on WhatsApp... lets talk ${MY_NAME}`), 1000);
+        sendMessage(psid, `Hey gorgeous! 💕 So happy you're here!`);
+        setTimeout(() => sendCard(psid, `Heyy darling 💕`, `I'm on WhatsApp... lets talk`), 1000);
 
       } else if (event.message && isNewFan) {
         sendMessage(psid, `Hey beautiful! 💕 Message me on WhatsApp 👇`);
-        setTimeout(() => sendCard(psid, `Heyy darling 💕 ${MY_NAME}`, `I'm on WhatsApp... lets talk ${MY_NAME}`), 1000);
+        setTimeout(() => sendCard(psid, `Heyy darling 💕`, `I'm on WhatsApp... lets talk`), 1000);
       }
     });
     res.status(200).send('EVENT_RECEIVED');
@@ -252,7 +251,7 @@ cron.schedule('30 7 * * *', () => {
   fans.forEach((psid, i) => {
     setTimeout(() => {
       sendMessage(psid, today.text);
-      setTimeout(() => sendCard(psid, `Heyy darling 💕 ${MY_NAME}`, today.subtitle), 1500);
+      setTimeout(() => sendCard(psid, `Heyy darling 💕`, today.subtitle), 1500);
     }, i * 2000);
   });
 });
